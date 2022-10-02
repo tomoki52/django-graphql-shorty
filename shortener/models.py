@@ -1,13 +1,15 @@
 from email.policy import default
-from enum import unique
 from hashlib import md5
 from pyexpat import model
 
 from django.db import models
 
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
+
+from graphql import GraphQLError
+
 # Create your models here.
-
-
 class URL(models.Model):
     full_url = models.URLField(unique=True)
     url_hash = models.URLField(unique=True)
@@ -24,5 +26,12 @@ class URL(models.Model):
     # ハッシュ化されたURLを返す処理をsaveに追加
     def save(self, *args, **kwargs):
         if not self.id:
-            self.url_hash = md5(self.full_url.encode()).hexdigest()[:10]  # なぜ10文字？
+            self.url_hash = md5(self.full_url.encode()).hexdigest()[:10]
+
+        validate = URLValidator()
+        try:
+            validate(self.full_url)
+        except ValidationError as e:
+            raise ValueError("invalid url")
+
         return super().save(*args, **kwargs)
