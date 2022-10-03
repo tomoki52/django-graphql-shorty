@@ -12,13 +12,20 @@ class URLType(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
-    urls = graphene.List(URLType, url=graphene.String())
+    urls = graphene.List(
+        URLType, url=graphene.String(), first=graphene.Int(), skip=graphene.Int()
+    )
 
-    def resolve_urls(self, info, url=None, **kwargs):
+    def resolve_urls(self, info, url=None, first=None, skip=None, **kwargs):
         query_set = URL.objects.all()
         if url:
             _filter = Q(full_url__icontains=url)
             query_set = query_set.filter(_filter)
+
+        if first:
+            query_set = query_set[:first]
+        if skip:
+            query_set = query_set[skip:]
         return query_set
 
 
